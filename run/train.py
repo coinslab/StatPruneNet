@@ -4,9 +4,10 @@ import torch.nn as nn
 from .val import Validation
 
 class Training():
-    def __init__(self, model, dataset, lr, criterion, optimizer, epochs, batch_size):
+    def __init__(self, model, train_dataset, lr, criterion, optimizer, epochs, batch_size, val_dataset=None):
         self.model = model
-        self.dataset = dataset
+        self.train_dataset = train_dataset
+        self.val_dataset = val_dataset
         self.lr = lr
         self.criterion = criterion
         self.optimizer = optimizer
@@ -20,17 +21,19 @@ class Training():
     def train(self):
         self.model.train()
 
-        num_samples = len(self.dataset)
-        num_val = int(0.2 * num_samples)
-        shuffled_indices = torch.randperm(num_samples)
+        if self.val_dataset is None:
+            num_samples = len(self.train_dataset)
+            num_val = int(0.2 * num_samples)
+            shuffled_indices = torch.randperm(num_samples)
 
-        train_indices = shuffled_indices[:-num_val].tolist()
-        val_indices = shuffled_indices[-num_val:].tolist()
+            train_indices = shuffled_indices[:-num_val].tolist()
+            val_indices = shuffled_indices[-num_val:].tolist()
 
-        train_dataset = Subset(self.dataset, train_indices)
-        val_dataset = Subset(self.dataset, val_indices)
-
-        train_dataloader = DataLoader(dataset=train_dataset, batch_size=self.batch_size, shuffle=True)
+            train_dataset = Subset(self.train_dataset, train_indices)
+            self.val_dataset = Subset(self.train_dataset, val_indices)
+            train_dataloader = DataLoader(dataset=train_dataset, batch_size=self.batch_size, shuffle=True)
+        else:
+            train_dataloader = DataLoader(dataset=self.train_dataset, batch_size=self.batch_size, shuffle=True)
 
 
         total_loss = 0.0
@@ -55,11 +58,11 @@ class Training():
 
             print(f"\nEpoch = {epoch}\nTraining average loss = {avg_loss}")
 
-            self.validation(val_dataset)
+            self.validation(self.val_dataset)
 
 
     def validation(self, val_dataset):
-        val_loss = Validation(model=self.model, dataset=val_dataset, criterion=self.criterion, batch_size=len(val_dataset)).avg_loss
+        val_loss = Validation(model=self.model, dataset=self.val_dataset, criterion=self.criterion, batch_size=len(self.val_dataset)).avg_loss
         if (val_loss < self.best_loss):
             self.best_loss = val_loss
             self.best_model = self.model.state_dict()

@@ -1,0 +1,8 @@
+.DS_Store
+test.py
+save.py
+data/digit/
+data/dropout/
+data/MNIST/
+data/tuandromd/
+data/madelon/

@@ -5,9 +5,11 @@ from sklearn.preprocessing import StandardScaler
 import pathlib
 
 class BinaryMNIST(Dataset):
-    def __init__(self, root):
+    def __init__(self, root, train=True):
         root = pathlib.Path(root)
-        data = np.loadtxt(root / 'binary_mnist/train.data', delimiter=',', dtype=np.float32)
+        if train:
+            data = np.loadtxt(root / 'binary_mnist/train.data', delimiter=',', dtype=np.float32)
+        else: data = np.loadtxt(root / 'binary_mnist/test.data', delimiter=',', dtype=np.float32)
         X = data[:, 1:]
         sc = StandardScaler()
         X = sc.fit_transform(X)

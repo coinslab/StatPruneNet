@@ -8,7 +8,7 @@ class Validation():
         self.dataset = dataset
         self.criterion = criterion
         self.batch_size = batch_size
-        self.val_dataloader = val_dataloader = DataLoader(self.dataset, batch_size=self.batch_size, shuffle=False)
+        self.val_dataloader = DataLoader(self.dataset, batch_size=self.batch_size, shuffle=False)
         self.avg_loss = self.val()
 
     def val(self):

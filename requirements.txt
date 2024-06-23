@@ -1,0 +1,4 @@
+torch
+numpy
+
+# Install using command in CLI 'pip -m install torch, numpy'

@@ -17,7 +17,7 @@ epochs = 1
 batch_size = 64
 
 print(f"Number of samples in the training data: {len(train_dataset)}")
-print(f"Number of samples in the testing data: {len(test_data)}")
+print(f"Number of samples in the testing data: {len(test_dataset)}")
 
 # Training, validation, and testing
 Evaluate(

@@ -61,6 +61,7 @@ class Evaluate():
         # Trainig loop (Note, will add stopping criteria)
         for epoch in range(self.epochs):
             total_loss = 0.0
+
             self.model.train()
             for x, y in train_dataloader:
                 self.optimizer.zero_grad()

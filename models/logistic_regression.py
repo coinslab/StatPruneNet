@@ -10,6 +10,8 @@ class LogisticRegression(nn.Module):
         y_hat = torch.sigmoid(self.fc1(input))
         return y_hat
 
+# Simple neural network with 784 neurons in the input layer, 0 hidden layers,
+# and 1 output layer with sigmoid
 class MNISTLogisticRegression(nn.Module):
     def __init__(self):
         super(MNISTLogisticRegression, self).__init__()

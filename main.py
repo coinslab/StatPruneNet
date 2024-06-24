@@ -1,4 +1,4 @@
-from models.logistic_regression import MNISTLogisticRegression
+from models.logistic_regression import LogisticRegression
 from datasets.binary_mnist import BinaryMNIST
 import torch.optim as optim
 import torch
@@ -7,11 +7,11 @@ from run.evaluate import Evaluate
 
 
 # Params, feel free to change
-model = MNISTLogisticRegression()
+model = LogisticRegression(784, output_layer=1)
 train_dataset = BinaryMNIST(root='./data', train=True)
 test_dataset = BinaryMNIST(root='./data', train=False)
 learning_rate = 0.01
-criterion = nn.BCELoss() # Binary cross entropy
+criterion = nn.BCEWithLogitsLoss() # Binary cross entropy
 optimizer = optim.SGD(model.parameters(), lr=learning_rate) # Stochastic gradient descent
 epochs = 50
 batch_size = 64

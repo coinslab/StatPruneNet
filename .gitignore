@@ -1,4 +1,6 @@
 .DS_Store
 save.py
 data/
-run/kfold.py
+cdata
+datasets
+transformations

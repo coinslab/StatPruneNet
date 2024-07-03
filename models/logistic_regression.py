@@ -6,7 +6,6 @@ class LogisticRegression(nn.Module):
         super(LogisticRegression, self).__init__()
         self.fc1 = nn.Linear(input_layer, output_layer)
 
-
     def forward(self, input):
         y_hat = self.fc1(input)
         return y_hat

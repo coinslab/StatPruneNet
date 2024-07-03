@@ -4,8 +4,8 @@ import torch
 class SoftmaxRegression(nn.Module):
     def __init__(self, input_layer, output_layer):
         super(SoftmaxRegression, self).__init__()
-        self.fc1 = nn.Linear(input_layer, 100)
-        self.fc2 = nn.Linear(100, output_layer)
+        self.fc1 = nn.Linear(input_layer, 1)
+        self.fc2 = nn.Linear(1, output_layer)
 
     def forward(self, input):
         input = input.view(-1, 28*28)

@@ -1,6 +1,4 @@
 .DS_Store
 save.py
 data/
-cdata
-datasets
-transformations
+temp/

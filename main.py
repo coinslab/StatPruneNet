@@ -13,10 +13,7 @@ learning_rate = 1
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.LBFGS(model.parameters(), lr=learning_rate)
 epochs = 5
-batch_size = len(train_dataset)
 
-print(f"Number of samples in the training data: {len(train_dataset)}")
-print(f"Number of samples in the testing data: {len(test_dataset)}")
 Evaluate(model=model,
          train_dataset=train_dataset,
          test_dataset=test_dataset,

@@ -1,6 +1,4 @@
-import torchvision
-from torchvision.transforms.transforms import ToTensor
-from torch.utils.data import Subset, Dataset
+from torch.utils.data import Subset
 import torch
 
 def KFold(dataset, k=10, random_state=None):

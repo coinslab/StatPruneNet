@@ -5,6 +5,10 @@ import torch.nn as nn
 from typing import Optional, Tuple, Type
 from .kfold import KFold
 from metrics.metrics import metrics
+from torch.func import functional_call, grad, vmap
+import torch.nn.functional as F
+import torch.nn.utils.prune as prune
+
 
 class Evaluate():
     def __init__(self,
@@ -25,34 +29,33 @@ class Evaluate():
         self.epochs = epochs
         self.device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
 
-        self.default_model = self.model.state_dict()
-        self.default_optimizer = self.optimizer.state_dict()
+        self.trained_model = None
+        self.trained_optimizer = None
 
         self.train()
+    '''
+    # Vectorized implementation of G and GRADMAX
+    def compute_G_vectorized(self, x, y):
+        def compute_loss(params, x, y):
+            x = x.unsqueeze(0)
+            y = y.unsqueeze(0)
 
-    def compute_grad(self, x, y):
-        x = x.unsqueeze(0)
-        y = y.unsqueeze(0)
+            y_hat = functional_call(self.model, params, x)
 
-        prediction = self.model(x)
-        loss = self.criterion(prediction, y)
+            loss = F.cross_entropy(y_hat, y)
+            return loss
 
-        gradients = list(torch.autograd.grad(loss, list(self.model.parameters())))
-        gradients = torch.cat([g.view(-1) for g in gradients])
+        params = {k: v.detach() for k, v in self.model.named_parameters()}
 
-        return gradients
+        grad_loss = grad(compute_loss)
+        all_grads = vmap(grad_loss, in_dims=(None, 0, 0))
+        grads = all_grads(params, x, y)
+        grads = list(grads.values())
+        G = torch.cat([g.view(len(self.train_dataset), -1) for g in grads], dim=1)
 
-    def compute_G(self, X, Y):
-        G = torch.stack([self.compute_grad(X[i], Y[i]) for i in range(len(self.train_dataset))])
+        gradmax = G.mean(dim=0).abs().max().item()
 
-        return G
-
-    def GRADMAX(self, G):
-        average = G.mean(dim=0)
-        absolute = average.abs()
-        gradmax = absolute.max()
-
-        return gradmax.item()
+        return G, gradmax
 
     def train(self):
         self.model.to(self.device)
@@ -61,7 +64,10 @@ class Evaluate():
         trainloader = DataLoader(self.train_dataset, batch_size=len(self.train_dataset), shuffle=False, num_workers=0)
 
         for epoch in range(self.epochs):
+            gradmax = float('inf')
+            converged = False
             loss = 0.0
+            G = None
             for x, y in trainloader:
                 x, y = x.to(self.device), y.to(self.device)
 
@@ -70,15 +76,14 @@ class Evaluate():
                     y_hat = self.model(x)
                     loss = self.criterion(y_hat, y)
 
-                    #params = list(self.model.parameters())
                     params = torch.cat([p.view(-1) for p in self.model.parameters()])
 
-                    l2_lambda = 0.001 / (2 * len(self.train_dataset))
-                    l2_norm = params.pow(2.0).sum() #sum(p.pow(2.0).sum() for p in self.model.parameters())
+                    l2_lambda = 0.1 / (2 * len(self.train_dataset))
+                    l2_norm = params.pow(2.0).sum()
                     loss += l2_lambda * l2_norm
 
-                    log_cosh_lambda = 0.001 / len(self.train_dataset)
-                    log_cosh_norm = torch.log(torch.cosh(2.3099 * params)).sum() #sum(torch.log(torch.cosh(2.3099 * p)).sum() for p in self.model.parameters())
+                    log_cosh_lambda = 0.1 / len(self.train_dataset)
+                    log_cosh_norm = torch.log(torch.cosh(2.3099 * params)).sum()
                     loss += log_cosh_lambda * log_cosh_norm
 
                     loss.backward()
@@ -87,16 +92,31 @@ class Evaluate():
 
                 loss += self.optimizer.step(closure)
 
-                G = self.compute_G(x, y)
-                gradmax = self.GRADMAX(G)
+                G, gradmax = self.compute_G_vectorized(x, y)
 
-                if (gradmax < 0.007):
-                    print("GRADMAX value achieved")
-                    return
+            print(f"\n\tEpoch = {epoch + 1}\tTraining loss = {loss:.4f}\tGradmax = {gradmax:.4f}")
 
-            print(f"\n\tEpoch = {epoch + 1}\tTraining loss = {loss:.2f}")
+            if (gradmax < 0.0007):
+                converged = True
 
+            if converged:
+                B = torch.matmul(G.T, G)
+                self.trained_model = self.model.state_dict()
+                self.trained_optimizer = self.optimizer.state_dict()
+                print("GRADMAX value achieved!")
+                print("Training complete!")
+                break
         '''
+
+        print("Pruning model...")
+        if self.model is not None:
+            for name, module in self.model.named_modules():
+                if isinstance(module, torch.nn.Linear):
+                    prune.random_unstructured(module, name='weight', amount=0.99)
+                    prune.random_unstructured(module, name='bias', amount=0.99)
+
+
+        print("Starting KFold training....")
         kfolds = KFold(self.train_dataset)
         k = len(kfolds)
 
@@ -109,8 +129,6 @@ class Evaluate():
         val_recalls = torch.zeros(k, device=self.device)
 
         for fold in range(len(kfolds)):
-            self.model.load_state_dict(self.default_model)
-            self.optimizer.load_state_dict(self.default_optimizer)
 
             print(f"Fold = {fold + 1}")
             val_fold = kfolds[fold]
@@ -185,4 +203,3 @@ class Evaluate():
         print(f"Accuracy = {val_accuracy:.2f}%")
         print(f"Precision = {val_precision:.2f}%")
         print(f"recall = {val_recall:.2f}%")
-        '''

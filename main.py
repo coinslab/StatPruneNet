@@ -1,11 +1,9 @@
 from torchvision.transforms import transforms
-from models.softmax_mlp import MLP
+from models.softmax_mlp import SoftmaxMLP
 import torch.optim as optim
 import torch.nn as nn
 from experiment.pruning_neuralnets import PruningNeuralNets
 import torchvision
-from torch.utils.data import Subset
-
 
 if __name__ == '__main__':
     transform = transforms.Compose([
@@ -19,7 +17,7 @@ if __name__ == '__main__':
     train_dataset = torchvision.datasets.FashionMNIST(root='./data', train=True, transform=transform, download=False)
     test_dataset = torchvision.datasets.FashionMNIST(root='./data', train=False, transform=transform, download=False)
 
-    model = MLP(784, 10)
+    model = SoftmaxMLP(784, 10)
     learning_rate = 5
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.LBFGS(model.parameters(),
@@ -28,7 +26,7 @@ if __name__ == '__main__':
                             max_eval=250,
                             tolerance_grad=1e-20,
                             tolerance_change=1e-27,
-                            history_size=50,
+                            history_size=100,
                             line_search_fn='strong_wolfe')
 
     epochs = 20
@@ -39,6 +37,6 @@ if __name__ == '__main__':
             loss_fn=criterion,
             optimizer=optimizer,
             epochs=epochs,
-            threshhold=1.0)
+            threshold=0.0007)
     
     experiment.experiment()

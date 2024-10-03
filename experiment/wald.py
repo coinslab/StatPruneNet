@@ -4,6 +4,8 @@ from torch.linalg import matrix_rank, pinv, inv
 from typing import Optional
 from torch.special import gammainc
 
+# 1 switch indicates the choice on lne 27,28
+# 2nd switch which does the check on line 25 and line 30 (if check on line 25 or 30 fail then set p = 1)
 class Wald():
     def __init__(self, model: nn.Module):
         self.model = model
@@ -23,9 +25,9 @@ class Wald():
         inf_norm = torch.max(torch.abs((S@A_pinv@A) - S))
 
         assert inf_norm <= 0.0001, 'Parameter Estimation Failure'
-
+    #    C= pinvA/len_dataset, C == pinvB/len_dataset
         C = (S@A_pinv@B@A_pinv@S.T) / len_dataset
-
+# check the rank of C
         W = (theta.T@S.T@pinv(C, hermitian=True, rtol=tol, atol=tol**2)@S@theta).view(-1)
         r = torch.tensor([float(S.shape[0])])
         p = 1 - gammainc(r/2, W/2)

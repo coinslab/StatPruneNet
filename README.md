@@ -1,3 +1,7 @@
-# PruningNeuralNets
-Development and Evaluation of Neural Net Pruning Algorithms
-Using Python 3.11.6
+# StatPruneNet
+Development and Evaluation of Neural Net Sensitivity-Based Pruning Algorithms Using Statistical Inference
+
+# Installation
+Install the dependencies this repo depends on:
+- torch
+- torchvision

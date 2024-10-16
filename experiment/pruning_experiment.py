@@ -62,6 +62,8 @@ class PruningExperiment:
         statistical_pruning = Statistical(self.model, self.epsilon, self.tolerance)
 
         statistical_pruning.prune(B, A, self.len_dataset)
+        # statistical_pruning.prune(B, B, self.len_dataset)
+        # statistical_pruning.prune(A, A, self.len_dataset)
 
         """
         Args:

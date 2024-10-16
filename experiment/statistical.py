@@ -85,6 +85,7 @@ class Statistical:
                         unit_mask = torch.tensor(unit_mask.view(num_units, -1))
 
                         prune_layer(module, 'weight', unit_mask)
+                        prune_layer(module, 'bias', unit_mask)
 
                         print(list(module.named_parameters()))
                 else: 

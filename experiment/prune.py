@@ -12,9 +12,6 @@ class StatisticalSensitivityPrune(BasePruningMethod):
 
         mask = mask * self.units_to_prune
 
-        print(f'mask? {mask}')
-        print(f'mask shape? {mask.shape}')
-
         return mask
     
 def prune_layer(module, name, units_to_prune):

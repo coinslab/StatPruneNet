@@ -2,16 +2,16 @@ from torch.utils.data import Subset, Dataset, DataLoader, ConcatDataset
 import torch
 from torch.optim import Optimizer
 import torch.nn as nn
-from typing import Optional, List
+from tqdm import tqdm
 from torch.optim import Optimizer
 from experiment.train import Train
 
 class CrossValidation(Train):
-    def __init__(self, k: Optional[int] = 10, seed: Optional[int] = None):
+    def __init__(self, k: int = 10, seed: int = None):
         self.k = k
         self.seed = seed
 
-    def _kfolds(self, dataset: Dataset, len_dataset: int) -> List[Dataset]:
+    def _kfolds(self, dataset: Dataset, len_dataset: int) -> list[Dataset]:
         if self.seed is not None:
             torch.manual_seed(self.seed)
 
@@ -37,8 +37,8 @@ class CrossValidation(Train):
                    loss_fn: nn.Module,
                    optimizer: Optimizer,
                    device: torch.device,
-                   epochs: Optional[int] = 20,
-                   l1_approx_lambda: Optional[float] = 0.1) -> None:
+                   epochs: int = 20,
+                   l1_approx_lambda: float = 0.1) -> None:
         
         len_dataset = len(dataset)
 

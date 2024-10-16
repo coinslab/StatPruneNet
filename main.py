@@ -2,7 +2,7 @@ from torchvision.transforms import transforms
 from models.softmax_mlp import SoftmaxMLP
 import torch.optim as optim
 import torch.nn as nn
-from experiment.pruning_neuralnets import PruningNeuralNets
+from experiment.pruning_experiment import PruningExperiment, Hyperparameters
 import torchvision
 
 if __name__ == '__main__':
@@ -29,14 +29,13 @@ if __name__ == '__main__':
                             history_size=100,
                             line_search_fn='strong_wolfe')
 
-    epochs = 20
+    hyperparams = Hyperparameters(epochs=50, gmin=1)
 
-    experiment = PruningNeuralNets(model=model,
+    experiment = PruningExperiment(model=model,
             train_dataset=train_dataset,
             test_dataset=test_dataset,
             loss_fn=criterion,
             optimizer=optimizer,
-            epochs=epochs,
-            threshold=0.0007)
+            hyperparameters=hyperparams)
     
     experiment.experiment()

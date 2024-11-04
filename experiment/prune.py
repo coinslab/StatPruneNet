@@ -9,7 +9,6 @@ class StatisticalSensitivityPrune(BasePruningMethod):
 
     def compute_mask(self, tensor, default_mask):
         mask = default_mask.clone()
-
         mask = mask * self.units_to_prune
 
         return mask

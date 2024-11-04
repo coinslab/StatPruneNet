@@ -57,7 +57,8 @@ class PruningExperiment:
                                          l2_lambda=self.l2_lambda,
                                          l1_approx_lambda=self.l1_approx_lambda)
         
-        
+        #cross validation on train and test
+
         print("Statistical Pruning on trained model...\n")
         statistical_pruning = Statistical(self.model, self.epsilon, self.tolerance)
 

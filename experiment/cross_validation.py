@@ -53,8 +53,8 @@ class CrossValidation(Train):
             train_folds = kfolds[:fold] + kfolds[fold + 1:]
             trainset = ConcatDataset(train_folds)
 
-            val_loader = DataLoader(val_fold, batch_size=len(val_fold), shuffle=False, num_workers=2, pin_memory=True)
-            trainloader = DataLoader(trainset, batch_size=len(trainset), shuffle=True, num_workers=2, pin_memory=True)
+            val_loader = DataLoader(val_fold, batch_size=len(val_fold), shuffle=False)
+            trainloader = DataLoader(trainset, batch_size=len(trainset), shuffle=True)
 
             x, y = next(iter(trainloader))
             x, y = x.to(device), y.to(device)
@@ -73,16 +73,7 @@ class CrossValidation(Train):
 
                 print(f"\n\tEpoch = {epoch + 1}\tTraining loss = {loss:.2f}")
 
-                '''
-                
-        print("Pruning model...")
-        if self.model is not None:
-            for name, module in self.model.named_modules():
-                if isinstance(module, torch.nn.Linear):
-                    prune.random_unstructured(module, name='weight', amount=0.99)
-                    prune.random_unstructured(module, name='bias', amount=0.99)
-
-
+        '''
         print("Starting KFold training....")
         kfolds = KFold(self.train_dataset)
         k = len(kfolds)

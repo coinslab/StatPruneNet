@@ -4,6 +4,7 @@ from torch.linalg import matrix_rank, pinv
 from torch.special import gammainc
 from torch.nn.utils import parameters_to_vector
 from experiment.prune import prune_layer
+from torch.nn.utils import prune
 import logging
 
 # 1 switch indicates the choice on lne 27,28
@@ -26,10 +27,10 @@ class Statistical:
         #assert inf_norm <= 0.0001, 'Parameter Estimation Failure'
 
         C = (S@A_pinv@B@A_pinv@S.T) / len_dataset
-        print(C.shape)
-        print(f"Rank of matrix C: {matrix_rank(C)}")
+        #print(C.shape)
+        #print(f"Rank of matrix C: {matrix_rank(C)}")
         C_inv = pinv(C, hermitian=True, rtol=self.tolerance, atol=self.tolerance**2)
-        print(f"Rank of matrix C inverse: {matrix_rank(C_inv)}")
+        #print(f"Rank of matrix C inverse: {matrix_rank(C_inv)}")
         W = (theta.T@S.T@C_inv@S@theta).view(-1)
         r = torch.tensor([float(S.shape[0])])
         p = 1 - gammainc(r/2, W/2)
@@ -45,12 +46,12 @@ class Statistical:
 
                 A_layer = A[name]
                 B_layer = B[name]
-                print(f"Shape of A and B: {A_layer.shape[0]} x {B_layer.shape[0]}")
-                print(f"Rank of matrix B: {matrix_rank(B_layer)}")
+                #print(f"Shape of A and B: {A_layer.shape[0]} x {B_layer.shape[0]}")
+                #print(f"Rank of matrix B: {matrix_rank(B_layer)}")
                 # if (matrix_rank(B_layer) < B_layer.shape[0]):
                 #     print("Locally Parameter Redundant")
 
-                print(f"Rank of matrix A: {matrix_rank(A_layer)}")
+                #print(f"Rank of matrix A: {matrix_rank(A_layer)}")
                 # if (matrix_rank(A_layer) < A_layer.shape[0]):
                 #     print("Not Locally Identifiable")
 
@@ -68,7 +69,7 @@ class Statistical:
                 unit_mask = []
 
                 for u in range(num_units):
-                    print(f"For unit {u + 1} in current layer.")
+                    #print(f"For unit {u + 1} in current layer.")
                     S = self.create_S(u, params_per_unit, num_params)
 
                     p = self.compute_p(A_layer, B_layer, A_pinv, S, theta, len_dataset)
@@ -76,17 +77,20 @@ class Statistical:
                     if (p.item() > self.epsilon):
                         S_stacked.append(S)
                         unit_mask.append(0)
-                
+
                 if S_stacked:
                     S_stacked = torch.cat(S_stacked, dim=0)
                     p_stacked = self.compute_p(A_layer, B_layer, A_pinv, S_stacked, theta, len_dataset)
 
                     if (p_stacked.item() > self.epsilon):
-                        unit_mask = torch.tensor(unit_mask.view(num_units, -1))
+                        unit_mask = torch.tensor(unit_mask)
 
-                        prune_layer(module, 'weight', unit_mask)
-                        prune_layer(module, 'bias', unit_mask)
+                        prune_layer(module, 'weight', unit_mask.view(num_units, -1))
+                        prune_layer(module, 'bias', unit_mask.view(-1, num_units))
 
-                        print(list(module.named_parameters()))
+                        prune.remove(module, 'weight')
+                        prune.remove(module, 'bias')
                 else: 
                     print('Cannot prune!')
+                    
+        return self.model

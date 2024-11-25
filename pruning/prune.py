@@ -1,5 +1,4 @@
 from torch.nn.utils.prune import BasePruningMethod
-import torch
 
 class StatisticalSensitivityPrune(BasePruningMethod):
     PRUNING_TYPE = 'structured'

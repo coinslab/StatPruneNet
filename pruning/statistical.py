@@ -3,7 +3,7 @@ import torch
 from torch.linalg import matrix_rank, pinv
 from torch.special import gammainc
 from torch.nn.utils import parameters_to_vector
-from .prune import prune_layer
+from .prune_layer import prune_layer
 from torch.nn.utils import prune
 
 def create_S(unit_idx: int, params_per_unit: int, num_params: int) -> torch.Tensor:
@@ -18,17 +18,23 @@ def compute_p(A: torch.Tensor, B: torch.Tensor, A_pinv: torch.Tensor, S: torch.T
     #assert inf_norm <= 0.0001, 'Parameter Estimation Failure'
 
     C = (S@A_pinv@B@A_pinv@S.T) / len_dataset
+    #print(C)
     #print(C.shape)
     #print(f"Rank of matrix C: {matrix_rank(C)}")
     C_inv = pinv(C, hermitian=True, rtol=tolerance, atol=tolerance**2)
+    #print(C_inv)
     #print(f"Rank of matrix C inverse: {matrix_rank(C_inv)}")
     W = (theta.T@S.T@C_inv@S@theta).view(-1)
+    #print(W)
     r = torch.tensor([float(S.shape[0])])
-    p = 1 - gammainc(r/2, W/2)
+    #print(r)
+    #p = 1 - gammainc(r/2, W/2)
+    p = 1 - gammainc(W/2, r/2)
+    #print(p)
 
     return p
     
-def prune(model: nn.Module, B: dict, A: dict, tolerance: float, epsilon: float, len_dataset: int, device: torch.device) -> nn.Module:
+def prune_layers(model: nn.Module, B: dict, A: dict, tolerance: float, epsilon: float, len_dataset: int, device: torch.device) -> nn.Module:
     linear_layers = [name for name, module in model.named_modules() if isinstance(module, nn.Linear)]
 
     for name, module in model.named_modules():
@@ -62,16 +68,20 @@ def prune(model: nn.Module, B: dict, A: dict, tolerance: float, epsilon: float, 
             for u in range(num_units):
                 print(f"For unit {u + 1} in current layer.")
                 S = create_S(u, params_per_unit, num_params)
+                print(S)
 
                 p = compute_p(A_layer, B_layer, A_pinv, S, theta, len_dataset, tolerance)
-
+                #print(p)
+                print(f'p = {p}')
                 if (p.item() > epsilon):
+                    print(f'Pruning unit {u}')
                     S_stacked.append(S)
                     unit_mask.append(0)
 
             if S_stacked:
+                print('Pruning...')
                 S_stacked = torch.cat(S_stacked, dim=0).to(device)
-                p_stacked = compute_p(A_layer, B_layer, A_pinv, S_stacked, theta, len_dataset)
+                p_stacked = compute_p(A_layer, B_layer, A_pinv, S_stacked, theta, len_dataset, tolerance=tolerance)
 
                 if (p_stacked.item() > epsilon):
                     unit_mask = torch.tensor(unit_mask)

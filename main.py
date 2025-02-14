@@ -4,7 +4,7 @@ import torch.optim as optim
 import torch.nn as nn
 from experiment import train, test, kfold
 from utils import set_seed
-from pruning.statistical import prune
+from pruning.statistical import prune_layers
 import torchvision
 from config import Config
 import torch
@@ -26,8 +26,8 @@ if __name__ == '__main__':
         #transforms.Normalize((0.5,), (0.5,))
     ])
 
-    train_dataset = torchvision.datasets.FashionMNIST(root='./data', train=True, transform=transform, download=False)
-    test_dataset = torchvision.datasets.FashionMNIST(root='./data', train=False, transform=transform, download=False)
+    train_dataset = torchvision.datasets.FashionMNIST(root='./data', train=True, transform=transform, download=True)
+    test_dataset = torchvision.datasets.FashionMNIST(root='./data', train=False, transform=transform, download=True)
 
     model = SoftmaxMLP(config.input_dim, config.output_dim)
     model.to(device)
@@ -42,7 +42,7 @@ if __name__ == '__main__':
                             line_search_fn='strong_wolfe')
     print('Beginning Training')
 
-    trained_model, A, B = train.train(model=model,
+    trained_model, A = train.train(model=model,
                                 train_dataset=train_dataset,
                                 criterion=criterion,
                                 optimizer=optimizer,
@@ -51,25 +51,27 @@ if __name__ == '__main__':
                                 gmin=config.gmin,
                                 l2_lambda=config.l2_lambda,
                                 l1_approx_lambda=config.l1_approx_lambda)
+    
+    #print(A)
 
     print('Starting Kfold Cross Validation on Trained Model')
     kfold.kfold(model=trained_model,
-                dataset=test_dataset,
-                criterion=criterion,
-                optimizer=optimizer,
-                epochs=config.epochs,
-                device=device,
-                gmin=config.gmin,
-                l2_lambda=config.l2_lambda,
-                l1_approx_lambda=config.l1_approx_lambda)
+                 dataset=test_dataset,
+                 criterion=criterion,
+                 optimizer=optimizer,
+                 epochs=config.epochs,
+                 device=device,
+                 gmin=config.gmin,
+                 l2_lambda=config.l2_lambda,
+                 l1_approx_lambda=config.l1_approx_lambda)
     
-    pruned_model = prune(trained_model, B, A, config.tolerance, config.epsilon, len(train_dataset), device)
+    pruned_model = prune_layers(trained_model, A, A, config.tolerance, config.epsilon, len(train_dataset), device)
     kfold.kfold(model=pruned_model,
-                dataset=test_dataset,
-                criterion=criterion,
-                optimizer=optimizer,
-                epochs=config.epochs,
-                device=device,
-                gmin=config.gmin,
-                l2_lambda=config.l2_lambda,
-                l1_approx_lambda=config.l1_approx_lambda)
+                 dataset=test_dataset,
+                 criterion=criterion,
+                 optimizer=optimizer,
+                 epochs=config.epochs,
+                 device=device,
+                 gmin=config.gmin,
+                 l2_lambda=config.l2_lambda,
+                 l1_approx_lambda=config.l1_approx_lambda)

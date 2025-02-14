@@ -121,7 +121,7 @@ def train(model: nn.Module,
     if not train_only:
         return model
 
-    B = compute_B(model, x, y, len_dataset)
-    A = compute_A(model, x, y)
+    #B = compute_B(model, x, y, len_dataset)
+    A = compute_B(model, x, y, len_dataset)
 
-    return model, B, A    
+    return model, A    
